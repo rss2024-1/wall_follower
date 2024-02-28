@@ -102,6 +102,7 @@ class WallTest(Node):
 
     def laser_callback(self, laser_scan):        
 
+        self.get_logger().info('TEST')
         if self.buffer_count < 30:
             self.place_car(self.START_POSE)
             self.buffer_count += 1
