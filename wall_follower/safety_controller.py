@@ -12,7 +12,7 @@ from wall_follower.visualization_tools import VisualizationTools
 class WallFollower(Node):
 
     def __init__(self):
-        super().__init__("wall_follower")
+        super().__init__("safety_controller")
         # Declare parameters to make them available for use
         self.declare_parameter("scan_topic", "default")
         self.declare_parameter("drive_topic", "default")
@@ -43,10 +43,16 @@ class WallFollower(Node):
                 10)
         self.subscription 
 
+        # self.actual_laser_subscriber = self.create_subscription(AckermannDriveStamped, '/vesc/high_level/ackermann_cmd_mux/output', self.laser_callback, 10)
+        # self.actual_laser_subscriber
+
+
         self.publisher = self.create_publisher(
                 AckermannDriveStamped,
                 self.DRIVE_TOPIC,
                 10)
+        
+        # self.actual_publisher = self.create_publisher(AckermannDriveStamped, '/vesc/low_level/ackermann_cmd_mux/input/safety', 10)
 
         self.line_pub = self.create_publisher(Marker, self.SCAN_TOPIC, 1)
         
@@ -60,7 +66,7 @@ class WallFollower(Node):
         error_deriv = error - self.prev_error
         self.prev_error = error
         control_output = self.KP*error + self.KD*error_deriv
-        if speed > 3.85:
+        if speed > 3.0:
             return control_output*(500)
         return control_output
 
@@ -99,13 +105,54 @@ class WallFollower(Node):
         control_output = min(control_output, .32)
         #self.get_logger().info('Speed: % f' % speed)
 
+        # Started adding from here!
+
+        range_len = len(scan.ranges)
+
+        low = -np.pi/3
+        high = np.pi/3
+
+        # estimate wall 
+        num_ranges = np.array([float(i) for i in range(len(scan.ranges))])
+        dist = np.array([float(i) for i in scan.ranges])
+        angles = np.array([float(scan.angle_min + i*scan.angle_increment) for i in range(1+int((scan.angle_max - scan.angle_min)/scan.angle_increment))])
+        
+        mask = []
+        for i in angles:
+            if i > low and i<high: 
+                mask.append(1)
+            else:
+                mask.append(0)  
+                
+        def frag(x, y): 
+            idx = np.isfinite(y) & np.isfinite(x)
+            m, b = np.polyfit(x[idx], y[idx], 1)
+            wall_distance = abs(b*b/m)/(np.sqrt((b**2/m**2)+(b**2)))
+            return wall_distance
+        
+
+        front_dist = np.ma.masked_array(dist, mask = mask)
+        front_angles = np.ma.masked_array(angles, mask = mask)
+
+        # front_y = np.multiply(front_dist, np.sin(front_angles))
+        # front_x = np.multiply(front_dist, np.cos(front_angles))
+
+        # front_distance = frag(front_x, front_y)
+        front_distance = abs(np.mean(front_dist))
+
         drive_command = AckermannDriveStamped()
+        if front_distance < 3: 
+            drive_command.drive.speed = 0.0
+            # self.get_logger().info(str(steer_msg.drive.speed))
+            # self.publisher_.publish(steer_msg)
+        else:
+            drive_command.drive.speed = speed
         drive_command.header.stamp = rclpy.time.Time().to_msg()
         drive_command.header.frame_id = self.MAP_FRAME
         
         drive_command.drive.steering_angle = self.SIDE*-1*control_output
         drive_command.drive.steering_angle_velocity = 0.0
-        drive_command.drive.speed = speed
+        
         drive_command.drive.acceleration = 0.0
         drive_command.drive.jerk = 0.0
 
@@ -123,4 +170,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
