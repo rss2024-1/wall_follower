@@ -118,8 +118,8 @@ class WallFollower(Node):
         drive_command.drive.acceleration = 0.0
         drive_command.drive.jerk = 0.0
 
-        data_string.data = ((str(drive_command.header.stamp.secs)
-                            + '.' + str(drive_command.header.stamp.nsecs))
+        data_string.data = (str(drive_command.header.stamp.secs)
+                            + '.' + str(drive_command.header.stamp.nsecs)
                             + "," + str(self.SIDE)
                             + "," + str(self.VELOCITY)
                             + "," + str(self.DESIRED_DISTANCE)
