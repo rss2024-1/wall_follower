@@ -32,8 +32,8 @@ class WallFollower(Node):
         self.MAP_FRAME = self.get_parameter('map_frame').get_parameter_value().string_value
         
         self.prev_error = 0.0 
-        self.KP = 1.3
-        self.KD = 3.5
+        self.KP = 2.5
+        self.KD = 35.0
 
 	# TODO: Initialize your publishers and subscribers here
         self.subscription = self.create_subscription(
@@ -47,6 +47,8 @@ class WallFollower(Node):
                 AckermannDriveStamped,
                 self.DRIVE_TOPIC,
                 10)
+        
+        self.data_dump = self.create_publisher(String, "data_dump", 10)
 
         self.line_pub = self.create_publisher(Marker, self.SCAN_TOPIC, 1)
         
@@ -61,7 +63,7 @@ class WallFollower(Node):
         self.prev_error = error
         control_output = self.KP*error + self.KD*error_deriv
         if speed > 3.85:
-            return control_output*(500)
+            return control_output*(5)
         return control_output
 
     def laser_callback(self, scan):
@@ -111,7 +113,6 @@ class WallFollower(Node):
 
         self.publisher.publish(drive_command)
 
-
 def main():
     
     rclpy.init()
@@ -124,3 +125,4 @@ def main():
 if __name__ == '__main__':
     main()
     
+

@@ -5,3 +5,5 @@ wall_follower:
     side: -1
     velocity: 1.0
     desired_distance: 1.
+    checking_distance: 1
+    time_safety_scalar: 2.5
