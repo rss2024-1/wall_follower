@@ -94,9 +94,8 @@ class WallFollower(Node):
         with open(self.data_file_name, 'a', newline='') as file:
             writer = csv.writer(file)
             if not file_exists:
-                writer.writerow(["Timestamp", "error", "desired_distance_from_wall", "side", "velocity"])
-            writer.writerow([timestamp, error, self.DESIRED_DISTANCE, self.SIDE, self.VELOCITY])
-
+                writer.writerow(["Timestamp", "error", "desired_distance_from_wall", "side", "velocity", "Kp", "Kd"])
+            writer.writerow([timestamp, error, self.DESIRED_DISTANCE, self.SIDE, self.VELOCITY, self.KP, self.KD])
 
     def laser_callback(self, scan):
         self.SIDE = self.get_parameter('side').get_parameter_value().integer_value
