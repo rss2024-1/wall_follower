@@ -39,39 +39,38 @@ class SafetyController(Node):
                 "/scan",
                 self.laser_callback,
                 10)
-        # self.drive_subscriber = self.create_subscription(AckermannDriveStamped, '/vesc/low_level/ackermann_cmd', self.drive_callback, 10)
-        # self.safety_publisher = self.create_publisher(AckermannDriveStamped, '/vesc/low_level/input/safety', 10)
-        self.safety_publisher = self.create_publisher(AckermannDriveStamped, '/vesc/low_level/input/safety', 10)
+        self.subscription
 
         self.publisher = self.create_publisher(AckermannDriveStamped, 'vesc/low_level/input/safety',10)
 
-        def laser_callback(self, scan):
-            self.STOPPING_DISTANCE = self.get_parameter('stopping_distance').get_parameter_value().double_value
-            self.VELOCITY = self.get_parameter('velocity').get_parameter_value().double_value
-            ranges = np.array(scan.ranges)
-            angles = np.arange(scan.angle_min, scan.angle_max, scan.angle_increment)
-            divider_ix = int(len(ranges)/10)
+    def laser_callback(self, scan):
+        self.STOPPING_DISTANCE = self.get_parameter('stopping_distance').get_parameter_value().double_value
+        self.VELOCITY = self.get_parameter('velocity').get_parameter_value().double_value
 
-            front_ranges = ranges[int(divider_ix*4.5):int(5.5*divider_ix)]
-            front_angles = angles[divider_ix*4:6*divider_ix]
+        ranges = np.array(scan.ranges)
+        angles = np.arange(scan.angle_min, scan.angle_max, scan.angle_increment)
+        divider_ix = int(len(ranges)/10)
 
-            close_count = (front_ranges<1.3).sum()
-            front_count = len(front_ranges)
+        front_ranges = ranges[int(divider_ix*4.5):int(5.5*divider_ix)]
+        front_angles = angles[divider_ix*4:6*divider_ix]
 
-            drive_command = AckermannDriveStamped()
+        close_count = (front_ranges < 1.3).sum()
+        front_count = len(front_ranges)
 
-            if close_count > (front_count/4):
-                drive_command.header.stamp = rclpy.time.Time().to_msg()
-                drive_command.header.frame_id = self.MAP_FRAME
-                drive_command.drive.speed = 0.0
-                drive_command.drive.acceleration = 0.0
-                drive_command.drive.jerk = 0.0
-                drive_command.drive.steering_angle = 0.0
-                drive_command.drive.steering_angle_velocity = 0.0
+        drive_command = AckermannDriveStamped()
 
-                self.publisher.publish(drive_command)
-            else:
-                pass
+        if close_count > (front_count/4):
+            drive_command.header.stamp = rclpy.time.Time().to_msg()
+            drive_command.header.frame_id = self.MAP_FRAME
+            drive_command.drive.speed = 0.0
+            drive_command.drive.acceleration = 0.0
+            drive_command.drive.jerk = 0.0
+            drive_command.drive.steering_angle = 0.0
+            drive_command.drive.steering_angle_velocity = 0.0
+
+            self.publisher.publish(drive_command)
+        else:
+            pass
 
 def main():
 
