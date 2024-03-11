@@ -6,9 +6,10 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
-
+import os
+import time
 from wall_follower.visualization_tools import VisualizationTools
-
+import csv
 
 class WallFollower(Node):
 
@@ -35,6 +36,20 @@ class WallFollower(Node):
         self.prev_error = 0.0 
         self.KP = 2.5
         self.KD = 35.0
+
+        data_dir = "data"
+        laser_scan_data_dir = "pid_error"
+
+        # Check if the data directory exists, if not create it
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        # Check if the laser_scan_data directory exists inside the data directory, if not create it
+        if not os.path.exists(os.path.join(data_dir, laser_scan_data_dir)):
+            os.makedirs(os.path.join(data_dir, laser_scan_data_dir))
+    
+        self.data_file_name = f"{data_dir}/{laser_scan_data_dir}/pid_error_{str(time.time())}.csv"
+
 
 	# TODO: Initialize your publishers and subscribers here
         self.subscription = self.create_subscription(
@@ -66,6 +81,22 @@ class WallFollower(Node):
         if speed > 3.85:
             return control_output*(5)
         return control_output
+    
+    def pid_error_to_csv(self, scan, error):
+        seconds = scan.header.stamp.sec
+        nanoseconds = scan.header.stamp.nanosec
+
+        timestamp = seconds + nanoseconds/(10**9)
+
+        # Check if file exists to decide whether to write headers
+        file_exists = os.path.isfile(self.data_file_name)
+
+        with open(self.data_file_name, 'a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(["Timestamp", "error", "desired_distance_from_wall", "side", "velocity"])
+            writer.writerow([timestamp, error, self.DESIRED_DISTANCE, self.SIDE, self.VELOCITY])
+
 
     def laser_callback(self, scan):
         self.SIDE = self.get_parameter('side').get_parameter_value().integer_value
@@ -97,6 +128,7 @@ class WallFollower(Node):
 
         speed = min(self.VELOCITY, 4.0)
         error = self.calculate_error(wall_y)
+
         control_output = self.pd_controller(error, speed)
         control_output = min(control_output, .32)
         #self.get_logger().info('Speed: % f' % speed)
@@ -112,6 +144,8 @@ class WallFollower(Node):
         drive_command.drive.jerk = 0.0
 
         self.publisher.publish(drive_command)
+
+        self.pid_error_to_csv(scan, error)
 
 def main():
     
