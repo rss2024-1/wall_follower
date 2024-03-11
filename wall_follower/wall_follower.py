@@ -2,6 +2,7 @@
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
@@ -52,6 +53,8 @@ class WallFollower(Node):
 
         self.line_pub = self.create_publisher(Marker, self.SCAN_TOPIC, 1)
         
+        self.data_dump = self.create_publisher(String, "data_dump", 10)
+        
     # TODO: Write your callback functions here    
     def calculate_error(self, wall_y):
         distance = wall_y[5*len(wall_y)//8]
@@ -67,11 +70,14 @@ class WallFollower(Node):
         return control_output
 
     def laser_callback(self, scan):
+        
+        # String message for data logging topic
+        data_string = String()
 
         self.SIDE = self.get_parameter('side').get_parameter_value().integer_value
         self.VELOCITY = self.get_parameter('velocity').get_parameter_value().double_value
         self.DESIRED_DISTANCE = self.get_parameter('desired_distance').get_parameter_value().double_value
-
+        
         ranges = np.array(scan.ranges)
         divider_ix = int(len(ranges)/3)
 
@@ -100,7 +106,10 @@ class WallFollower(Node):
         control_output = self.pd_controller(error, speed)
         control_output = min(control_output, .32)
         #self.get_logger().info('Speed: % f' % speed)
-
+        
+        # data logging timestamp:
+        data_string.data = str(rclpy.time.Time())
+        
         drive_command = AckermannDriveStamped()
         drive_command.header.stamp = rclpy.time.Time().to_msg()
         drive_command.header.frame_id = self.MAP_FRAME
@@ -111,7 +120,20 @@ class WallFollower(Node):
         drive_command.drive.acceleration = 0.0
         drive_command.drive.jerk = 0.0
 
+        # data_string.data = (str(drive_command.header.stamp.secs)
+        #                     + '.' + str(drive_command.header.stamp.nsecs)
+        #                     + "," + str(self.SIDE)
+        #                     + "," + str(self.VELOCITY)
+        #                     + "," + str(self.DESIRED_DISTANCE)
+        #                     + "," + str(self.KP)
+        #                     + "," + str(self.KD)
+        #                     + "," + str(speed)
+        #                     + "," + str(error)
+        #                     + "," + str(control_output)
+        #                     )
+
         self.publisher.publish(drive_command)
+        self.data_dump.publish(data_string)
 
 def main():
     
@@ -125,4 +147,3 @@ def main():
 if __name__ == '__main__':
     main()
     
-

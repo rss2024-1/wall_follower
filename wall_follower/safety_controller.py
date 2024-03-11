@@ -39,7 +39,13 @@ class SafetyController(Node):
                 "/scan",
                 self.laser_callback,
                 10)
+<<<<<<< HEAD
         self.subscription
+=======
+        # self.drive_subscriber = self.create_subscription(AckermannDriveStamped, '/vesc/low_level/ackermann_cmd', self.drive_callback, 10)
+        # self.safety_publisher = self.create_publisher(AckermannDriveStamped, '/vesc/low_level/input/safety', 10)
+        self.safety_publisher = self.create_publisher(AckermannDriveStamped, '/vesc/low_level/input/safety', 10)
+>>>>>>> 40e02a15cb863157dd6343dd44423f12cb56b59a
 
         self.publisher = self.create_publisher(AckermannDriveStamped, 'vesc/low_level/input/safety',10)
 
