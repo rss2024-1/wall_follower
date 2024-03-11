@@ -53,8 +53,6 @@ class WallFollower(Node):
 
         self.line_pub = self.create_publisher(Marker, self.SCAN_TOPIC, 1)
         
-        self.data_dump = self.create_publisher(String, "data_dump", 10)
-        
     # TODO: Write your callback functions here    
     def calculate_error(self, wall_y):
         distance = wall_y[5*len(wall_y)//8]
