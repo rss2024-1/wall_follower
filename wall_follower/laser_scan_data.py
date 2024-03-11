@@ -5,7 +5,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan                                                  
 import csv
 import os
-import pandas as pd
 import time as time
 
 

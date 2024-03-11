@@ -82,7 +82,7 @@ class WallFollower(Node):
             return control_output*(5)
         return control_output
     
-    def pid_error_to_csv(self, scan, error):
+    def pid_error_to_csv(self, scan, error, steering_angle):
         seconds = scan.header.stamp.sec
         nanoseconds = scan.header.stamp.nanosec
 
@@ -94,8 +94,8 @@ class WallFollower(Node):
         with open(self.data_file_name, 'a', newline='') as file:
             writer = csv.writer(file)
             if not file_exists:
-                writer.writerow(["Timestamp", "error", "desired_distance_from_wall", "side", "velocity", "Kp", "Kd"])
-            writer.writerow([timestamp, error, self.DESIRED_DISTANCE, self.SIDE, self.VELOCITY, self.KP, self.KD])
+                writer.writerow(["Timestamp", "error", "desired_distance_from_wall", "side", "velocity", "Kp", "Kd", "steering_angle"])
+            writer.writerow([timestamp, error, self.DESIRED_DISTANCE, self.SIDE, self.VELOCITY, self.KP, self.KD, steering_angle])
 
     def laser_callback(self, scan):
         self.SIDE = self.get_parameter('side').get_parameter_value().integer_value
@@ -144,7 +144,7 @@ class WallFollower(Node):
 
         self.publisher.publish(drive_command)
 
-        self.pid_error_to_csv(scan, error)
+        self.pid_error_to_csv(scan, error, drive_command.drive.steering_angle)
 
 def main():
     
