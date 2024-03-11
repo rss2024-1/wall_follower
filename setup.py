@@ -29,6 +29,7 @@ setup(
 	        'viz_example = wall_follower.viz_example:main',
         	'test_wall_follower = wall_follower.test_wall_follower:main',
             'safety_controller = wall_follower.safety_controller:main',
+            'laser_scan_data = wall_follower.laser_scan_data:main',
         ],
     },
 )

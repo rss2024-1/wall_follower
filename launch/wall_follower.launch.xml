@@ -3,6 +3,9 @@
   <node pkg="wall_follower" name="wall_follower" exec="wall_follower" output="screen">
     <param from="$(find-pkg-share wall_follower)/params.yaml"/>
   </node>
+  <node pkg="wall_follower" name="laser_scan_data" exec="laser_scan_data" output="screen"></node>
+  <!-- <node pkg="wall_follower" name="safety_controller" exec="safety_controller" output="screen"></node> -->
+
   <!-- Launch the safety controller -->
   <!-- <node pkg="wall_follower" exec="safety_controller" name="safety_controller" output="screen">
     <param from="$(find-pkg-share wall_follower)/params.yaml"/>
