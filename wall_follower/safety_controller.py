@@ -15,9 +15,17 @@ class SafetyController(Node):
         self.declare_parameter("velocity", "default")                                          
         self.declare_parameter("stopping_distance", "default")                                 
         self.declare_parameter("map_frame", "default")                                         
-        # Fetch constants from the ROS parameter server                                        
-        self.SCAN_TOPIC = self.get_parameter('scan_topic').get_parameter_value().string_value
-        self.DRIVE_TOPIC = self.get_parameter('drive_topic').get_parameter_value().string_value
+        # Fetch constants from the ROS parameter server             
+        try:
+            self.SCAN_TOPIC = self.get_parameter('scan_topic').get_parameter_value().string_value
+        except:
+            self.SCAN_TOPIC = "/scan"
+                              
+        try:
+            self.DRIVE_TOPIC = self.get_parameter('drive_topic').get_parameter_value().string_value
+        except:
+            self.DRIVE_TOPIC = "/drive"
+
         self.VELOCITY = self.get_parameter('velocity').get_parameter_value().double_value
         self.DESIRED_DISTANCE = self.get_parameter('stopping_distance').get_parameter_value().double_value
         self.MAP_FRAME = self.get_parameter('map_frame').get_parameter_value().string_value
@@ -36,12 +44,11 @@ class SafetyController(Node):
         # TODO: Initialize your publishers and subscribers here
         self.subscription = self.create_subscription(
                 LaserScan,
-                "/scan",
+                self.SCAN_TOPIC,
                 self.laser_callback,
                 10)
-        self.subscription
 
-        self.publisher = self.create_publisher(AckermannDriveStamped, 'vesc/low_level/input/safety',10)
+        self.publisher = self.create_publisher(AckermannDriveStamped, self.DRIVE_TOPIC,10)
 
     def laser_callback(self, scan):
         self.STOPPING_DISTANCE = self.get_parameter('stopping_distance').get_parameter_value().double_value

@@ -19,9 +19,14 @@ class LaserScanData(Node):
     def __init__(self):                                                                        
         super().__init__("listen_range_data")       
 
+        try:
+            self.SCAN_TOPIC = self.get_parameter('scan_topic').get_parameter_value().string_value
+        except:
+            self.SCAN_TOPIC = "/scan"
+
         self.subscription = self.create_subscription(
                 LaserScan,
-                "/scan",
+                 self.SCAN_TOPIC,
                 self.laser_callback,
                 10)
 
